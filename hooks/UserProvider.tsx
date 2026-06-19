@@ -77,13 +77,9 @@ function UserProvider({ children }: { children: React.ReactNode }) {
             console.error('Error fetching user:', err)
             setError('An error occurred while fetching profile')
         } finally {
-            setIsLoading(false)
+            setIsLoading(false);
         }
     }
-
-    useEffect(() => {
-        fetchUser()
-    }, []) // Add empty dependency array!
 
     const value: UserContextType = {
         user,

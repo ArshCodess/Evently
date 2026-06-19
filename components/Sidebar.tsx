@@ -1,6 +1,6 @@
 "use client"
 import { UserButton } from '@clerk/nextjs';
-import { Home, Calendar, Megaphone, Bell, User, Heart, Search } from 'lucide-react';
+import { Home, Calendar, Megaphone, Bell, User, Heart, Search, Ticket } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -8,7 +8,7 @@ import { usePathname } from 'next/navigation';
 const menuItems = [
   { id: 'applied', label: 'Applied', icon: Heart, href: '/applied' },
   { id: 'events', label: 'Explore', icon: Search, href: '/events' },
-  { id: 'notifications', label: 'Notifications', icon: Bell, href: '/notifications' },
+  { id: 'Tickets', label: 'Tickets', icon: Ticket, href: '/tickets' },
   { id: 'profile', label: 'Profile', icon: User, href: '/profile' },
 ];
 
@@ -42,11 +42,11 @@ export default function Sidebar() {
                 <button
                   className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${
                     active
-                      ? 'bg-gradient-to-r from-indigo-50 to-pink-50 text-indigo-700 shadow-sm'
+                      ? 'bg-gradient-to-br w-full from-indigo-500 border border-gray-50 via-purple-500 to-pink-500 text-white shadow-sm'
                       : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
-                  <Icon className={`w-5 h-5 ${active ? 'text-indigo-600' : ''}`} />
+                  <Icon className={`w-5 h-5 ${active ? 'text-white' : ''}`} />
                   <span className="font-medium">{item.label}</span>
                 </button>
               </Link>

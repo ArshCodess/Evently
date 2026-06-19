@@ -9,20 +9,26 @@ export default function AnnouncementCard({ announcement }: {
     createdBy?: User;
   }
 }) {
+  var isNew = false;
   const timeAgo = (date: string) => {
     const seconds = Math.floor((new Date().getTime() - new Date(date).getTime()) / 1000);
 
-    if (seconds < 60) return 'Just now';
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+    if (seconds < 60)
+      return 'Just now';
+    else if (seconds < 3600)
+      return `${Math.floor(seconds / 60)}m ago`;
+    else if (seconds < 86400)
+      return `${Math.floor(seconds / 3600)}h ago`;
+    else{
+      isNew = true;
+    }
     return `${Math.floor(seconds / 86400)}d ago`;
   };
-  console.log(announcement.createdAt);
 
 
   return (
     <div className="group relative bg-gradient-to-br from-white to-indigo-50/30 rounded-2xl border border-indigo-100 p-6 hover:shadow-lg transition-all duration-300">
-      {announcement.createdAt && (
+      {announcement.createdAt&& isNew && (
         <div className="absolute top-4 right-4">
           <span className="inline-flex items-center px-2.5 py-1 bg-gradient-to-r from-pink-500 to-rose-500 text-white text-xs font-bold rounded-full shadow-lg">
             New

@@ -690,7 +690,10 @@ export default function UpdateEventPage({eventId}: { eventId: string }) {
         body:    JSON.stringify(payload),
       });
 
-      if (!res.ok) throw new Error("Failed to update event");
+      if (!res.ok) {
+        const data = await res.json();
+        console.log("Error:",data.details)
+        throw new Error("Failed to update event")};
 
       setSubmitted(true);
       setTimeout(() => router.push("/dashboard"), 1800);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useUser } from "@/hooks/UserProvider";
+import { Loader2 } from "lucide-react";
 import { register } from "module";
 import { useParams } from "next/navigation";
 import { JSX, useEffect, useMemo, useState } from "react";
@@ -132,10 +133,14 @@ export default function EventDetailClient({
     const [canRegister, setCanRegister] = useState(true);
     const [loading, setLoading] = useState(true);
     const [isRegistered, setIsRegistered] = useState(false);
+    const [isRegisterLoading, setIsRegisterLoading] = useState(false);
     const { eventId } = useParams();
     const today = new Date();
     const eventDate = event ? new Date(event.date) : null;
-    const { user, isLoading } = useUser();
+    const { user, isLoading, refetch } = useUser();
+    const [registeredCount, setregisteredCount] = useState(event?._count?.registrations ?? 0);
+    var capacity = event?.capacity ?? 0;
+    const [spotsRemaining, setspotsRemaining] = useState(Math.max(0, capacity - registeredCount));
 
     const daysLeft = useMemo(() => {
         if (!eventDate) return null;
@@ -147,6 +152,9 @@ export default function EventDetailClient({
     const isClosed = daysLeft !== null && daysLeft <= 0;
 
     useEffect(() => {
+        if (!user) {
+            refetch();
+        }
         if (isLoading || !user) return;
 
         const fetchEvent = async () => {
@@ -154,12 +162,17 @@ export default function EventDetailClient({
                 const res = await fetch(`/api/events/${eventId}`);
                 const data = await res.json();
 
+                //Add an action to check for registrations rather than passing whole data of registered candidates
                 const isUserRegistered = data?.registrations?.some(
                     (item: Registration) => item.userId === user?.user.id
                 );
 
                 setIsRegistered(!!isUserRegistered);
                 setEvent(data);
+
+                capacity = data?.capacity ?? 0;
+                setregisteredCount(data?._count?.registrations);
+                setspotsRemaining(Math.max(0, capacity - data?._count?.registrations))
             } catch (error) {
                 console.error("Fetch failed", error);
             } finally {
@@ -174,24 +187,24 @@ export default function EventDetailClient({
     if (!event) return <EmptyState />;
 
     /* ── Derived stats from API data ── */
-    var registeredCount = event._count?.registrations ?? 0;
-    const capacity = event.capacity ?? 0;
-    var spotsRemaining = Math.max(0, capacity - registeredCount);
 
     const handleRegister = async () => {
         if (!user?.universityDetails) {
             setCanRegister(false);
         } else {
+            setIsRegisterLoading(true);
             const response = await fetch(`/api/events/${event.id}/register`, {
                 method: "POST",
                 body: JSON.stringify(user.universityDetails),
             });
             if (!response.ok) {
                 alert("Registration failed. Please try again.");
+                setIsRegisterLoading(false)
             } else {
                 setIsRegistered(true);
-                registeredCount++;
-                spotsRemaining = Math.max(0, capacity - registeredCount);
+                setIsRegisterLoading(false)
+                setregisteredCount(registeredCount + 1);
+                setspotsRemaining(spotsRemaining - 1);
             }
         }
     };
@@ -212,8 +225,8 @@ export default function EventDetailClient({
 
     /* ── Shared sub-components ── */
     const RegisterButton = ({ size = "lg" }: { size?: "sm" | "lg" }) => {
-        const py = size === "lg" ? "py-3 md:py-4" : "py-3 sm:py-4";
-        const text = size === "lg" ? "text-base md:text-lg" : "text-xs sm:text-sm";
+        const py = size === "lg" ? "py-3 md:py-3" : "py-1 sm:py-4";
+        const text = size === "lg" ? "text-base" : "text-xs sm:text-sm";
 
         if (isClosed)
             return (
@@ -225,12 +238,9 @@ export default function EventDetailClient({
         if (isRegistered)
             return (
                 <div className="w-full">
-                    <button disabled className={`w-full ${py} px-3 sm:px-4 rounded-xl bg-green-50 border-2 border-green-500 text-green-700 font-semibold ${text} flex items-center justify-center gap-2`}>
+                    <button disabled className={`w-full ${py} px-2 sm:px-4 rounded-xl bg-green-50 border-2 border-green-500 text-green-700 font-semibold ${text} flex flex-col md:flex-row items-center md:gap-2 justify-center `}>
                         <span>✓</span> You're Registered!
                     </button>
-                    <p className="text-xs sm:text-sm text-center text-green-600 mt-2 sm:mt-3">
-                        Check your email for confirmation
-                    </p>
                 </div>
             );
 
@@ -239,7 +249,9 @@ export default function EventDetailClient({
                 onClick={handleRegister}
                 className={`w-full ${py} rounded-xl bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 text-white font-bold ${text} shadow-lg hover:shadow-xl transition-all transform hover:scale-105`}
             >
-                Register Now
+                {
+                    isRegisterLoading ? (<span><Loader2 className="animate-spin mx-auto" /></span>) : "Register Now"
+                }
             </button>
         );
     };
@@ -264,7 +276,6 @@ export default function EventDetailClient({
         !isClosed && daysLeft !== null && daysLeft <= 7 ? (
             <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-orange-50 border border-orange-200 rounded-xl">
                 <div className="flex items-center gap-2 text-orange-700 text-xs sm:text-sm font-semibold">
-                    <span className="text-base sm:text-xl">⏰</span>
                     <span>{daysLeft <= 2 ? "Last chance to register!" : `Only ${daysLeft} days left!`}</span>
                 </div>
             </div>
@@ -291,143 +302,140 @@ export default function EventDetailClient({
                 </div>
             )}
 
-            {/* ── HERO ── */}
-            <section className="relative rounded-b-2xl overflow-hidden">
-                {event.imageUrl && (
-                    <img src={event.imageUrl} alt={event.title} className="absolute inset-0 w-full h-full object-cover opacity-95" />
-                )}
-                {/* Dark gradient overlay for text contrast */}
-                <div
-                    className="absolute inset-0"
-                    style={{
-                        backgroundImage: "linear-gradient(to bottom, rgba(0, 0, 0, 0.15) 0%, rgba(0, 0, 0, 0.35) 40%, rgba(0, 0, 0, 0.55) 100%)",
-                    }}
-                />
-                <div className="relative max-w-6xl mx-auto px-4 sm:px-6 py-8 pb-12 sm:py-16 md:py-32 md:pt-20">
-                    <div className="flex  items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
-                        <span className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/20 backdrop-blur-sm text-white text-xs sm:text-sm font-medium border border-white/30">
-                            {event.category}
-                        </span>
-                        {!isClosed && (
-                            <span className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-yellow-400 text-yellow-900 text-xs sm:text-sm font-bold flex items-center gap-1">
-                                <span className="animate-pulse">⚡</span> Registration Open
-                            </span>
-                        )}
-                    </div>
-
-                    <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-1 sm:mb-4 leading-tight">
-                        {event.title}
-                    </h1>
-                    {/* <p className="text-xs h-min sm:h-full w-full overflow-scroll  text-ellipsis sm:text-lg md:text-xl text-pink-100 max-w-3xl mb-2 sm:mb-8 leading-relaxed whitespace-pre-wrap" style={{scrollbarWidth:"none"}}>
-                        {event.description}
-                    </p> */}
-
-                    <div className="flex flex-wrap items-center gap-3 sm:gap-6 text-white/90 text-xs sm:text-base">
-                        <div className="flex items-center gap-1.5 sm:gap-2">
-                            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                            <span className="font-medium">
-                                {eventDate!.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
-                            </span>
-                        </div>
-                        <div className="flex items-center gap-1.5 sm:gap-2">
-                            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <span className="font-medium">
-                                {eventDate!.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                            </span>
-                        </div>
-                        <div className="flex items-center gap-1.5 sm:gap-2">
-                            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
-                            <span className="font-medium">{event.location}</span>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* ── STATS ── */}
-            <section className="max-w-6xl lg:mx-auto lg:px-6 -mt-8 sm:-mt-12 relative z-10">
-                <div className="bg-white rounded-2xl lg:shadow-xl lg:border rounded-b-none lg:rounded-b-2xl md:border-gray-100 p-4 sm:p-6 md:p-8">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
-                        {/* Registered */}
-                        <div className="text-center">
-                            <div className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
-                                {registeredCount}
-                            </div>
-                            <div className="text-gray-600 text-xs sm:text-sm md:text-base mt-1 sm:mt-2">Registered</div>
-                            {capacity > 0 && (
-                                <div className="w-full bg-gray-200 rounded-full h-1.5 sm:h-2 mt-2 sm:mt-3">
-                                    <div
-                                        className="bg-gradient-to-r from-pink-600 to-purple-600 h-1.5 sm:h-2 rounded-full"
-                                        style={{ width: `${Math.min((registeredCount / capacity) * 100, 100)}%` }}
-                                    />
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Capacity */}
-                        <div className="text-center">
-                            <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800">
-                                {capacity > 0 ? capacity : "∞"}
-                            </div>
-                            <div className="text-gray-600 text-xs sm:text-sm md:text-base mt-1 sm:mt-2">Total Capacity</div>
-                        </div>
-
-                        {/* Spots left */}
-                        <div className="text-center">
-                            <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800">
-                                {capacity > 0 ? spotsRemaining : "Open"}
-                            </div>
-                            <div className="text-gray-600 text-xs sm:text-sm md:text-base mt-1 sm:mt-2">Spots Left</div>
-                        </div>
-
-                        {/* Days to go */}
-                        <div className="text-center">
-                            <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800">
-                                {daysLeft !== null && daysLeft > 0 ? daysLeft : 0}
-                            </div>
-                            <div className="text-gray-600 text-xs sm:text-sm md:text-base mt-1 sm:mt-2">
-                                {isClosed ? "Event Ended" : "Days to Go"}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* ── MOBILE REGISTRATION ── */}
-            <div className="bg-white lg:hidden shadow-md border-gray-100 p-4 sm:p-6 pt-0">
-                <UrgencyBanner />
-                <div className="flex items-center relative space-x-2 transition">
-                    <RegisterButton size="sm" />
-                    <ShareButton size="sm" />
-                </div>
-                {!isClosed && capacity > 0 && (
-                    <div className="mt-4 sm:mt-6 pt-3 sm:pt-5">
-                        <p className="text-xs sm:text-sm text-gray-600 text-center">
-                            {spotsRemaining} spots remaining
-                        </p>
-                    </div>
-                )}
-            </div>
 
             {/* ── MAIN CONTENT ── */}
             <section className="max-w-6xl mx-auto px-4 sm:px-6 py-6 md:pb-16 grid lg:grid-cols-3 gap-6 sm:gap-8 md:gap-12 relative mb-20">
                 {/* ──── LEFT COLUMN ──── */}
-                <div className="lg:col-span-2 space-y-6 sm:space-y-8 md:space-y-12 relative">
+                <div className="lg:col-span-2 space-y-6 sm:space-y-8 md:space-y-8 relative">
+                    {/* ── HERO ── */}
+                    <div>
+                        <section className="relative rounded-2xl rounded-b-none overflow-hidden ">
+                            {event.imageUrl && (
+                                <img src={event.imageUrl} alt={event.title} className="absolute inset-0 w-full h-full object-cover opacity-95" />
+                            )}
+                            {/* Dark gradient overlay for text contrast */}
+                            <div
+                                className="absolute inset-0"
+                                style={{
+                                    backgroundImage: "linear-gradient(to bottom, rgba(0, 0, 0, 0.15) 0%, rgba(0, 0, 0, 0.35) 40%, rgba(0, 0, 0, 0.55) 100%)",
+                                }}
+                            />
+                            <div className="relative max-w-6xl mx-auto px-4 sm:px-6 py-8 pb-12 sm:py-16 md:py-32 md:pt-8">
+                                <div className="flex  items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+                                    <span className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/20 backdrop-blur-sm text-white text-xs sm:text-sm font-medium border border-white/30">
+                                        {event.category}
+                                    </span>
+                                    {!isClosed && (
+                                        <span className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-yellow-400 text-yellow-900 text-xs sm:text-sm font-bold flex items-center gap-1">
+                                            <span className="animate-pulse">⚡</span> Registration Open
+                                        </span>
+                                    )}
+                                </div>
+
+                                <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-5xl font-bold text-white mb-1 sm:mb-4 leading-tight">
+                                    {event.title}
+                                </h1>
+
+                                <div className="flex flex-wrap items-center gap-3 sm:gap-6 text-white/90 text-xs sm:text-base">
+                                    <div className="flex items-center gap-1.5 sm:gap-2">
+                                        <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                        </svg>
+                                        <span className="font-medium">
+                                            {eventDate!.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 sm:gap-2">
+                                        <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <span className="font-medium">
+                                            {eventDate!.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 sm:gap-2">
+                                        <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        </svg>
+                                        <span className="font-medium">{event.location}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                        <section className=" z-20 lg:mx-auto ">
+                            <div className="bg-white rounded-2xl rounded-t-none lg:shadow-xl lg:border rounded-b-none lg:rounded-b-2xl md:border-gray-100 p-4 sm:p-6 md:p-5">
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
+                                    {/* Registered */}
+                                    <div className="text-center">
+                                        <div className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
+                                            {registeredCount}
+                                        </div>
+                                        <div className="text-gray-600 text-xs sm:text-sm md:text-base mt-1 sm:mt-2">Registered</div>
+                                        {capacity > 0 && (
+                                            <div className="w-full bg-gray-200 rounded-full h-1.5 sm:h-2 mt-2 sm:mt-3">
+                                                <div
+                                                    className="bg-gradient-to-r from-pink-600 to-purple-600 h-1.5 sm:h-2 rounded-full"
+                                                    style={{ width: `${Math.min((registeredCount / capacity) * 100, 100)}%` }}
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Capacity */}
+                                    <div className="text-center">
+                                        <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800">
+                                            {capacity > 0 ? capacity : "∞"}
+                                        </div>
+                                        <div className="text-gray-600 text-xs sm:text-sm md:text-base mt-1 sm:mt-2">Total Capacity</div>
+                                    </div>
+
+                                    {/* Spots left */}
+                                    <div className="text-center">
+                                        <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800">
+                                            {capacity > 0 ? spotsRemaining : "Open"}
+                                        </div>
+                                        <div className="text-gray-600 text-xs sm:text-sm md:text-base mt-1 sm:mt-2">Spots Left</div>
+                                    </div>
+
+                                    {/* Days to go */}
+                                    <div className="text-center">
+                                        <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800">
+                                            {daysLeft !== null && daysLeft > 0 ? daysLeft : 0}
+                                        </div>
+                                        <div className="text-gray-600 text-xs sm:text-sm md:text-base mt-1 sm:mt-2">
+                                            {isClosed ? "Event Ended" : "Days to Go"}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                        {/* ── MOBILE REGISTRATION ── */}
+                        <div className="bg-white lg:hidden rounded-b-2xl shadow-md border-gray-100 p-4 sm:p-6 pt-0">
+                            <UrgencyBanner />
+                            <div className="flex items-center relative space-x-2 transition">
+                                <RegisterButton size="sm" />
+                                <ShareButton size="sm" />
+                            </div>
+                            {!isClosed && capacity > 0 && (
+                                <div className="mt-4 sm:mt-6 pt-3 sm:pt-5">
+                                    <p className="text-xs sm:text-sm text-gray-600 text-center">
+                                        {spotsRemaining} spots remaining
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
                     <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-fuchsia-200 p-4 sm:p-6 md:p-8">
-                        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-4">📖 Description</h1>
+                        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-4"> Description</h1>
                         <p className="text-sm sm:text-base text-gray-700 leading-relaxed whitespace-pre-wrap">{event.description}</p>
                     </div>
                     {/* Highlights */}
                     {event.highlights?.length > 0 && (
                         <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-6 md:p-8">
                             <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-4 sm:mb-6 flex items-center gap-2">
-                                <span className="text-2xl sm:text-3xl">✨</span>
+                                <span className="text-2xl sm:text-3xl"></span>
                                 Event Highlights
                             </h2>
                             <ul className="space-y-3 sm:space-y-4">
@@ -449,7 +457,7 @@ export default function EventDetailClient({
                     {event.rewards?.length > 0 && (
                         <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl sm:rounded-2xl border border-purple-100 p-4 sm:p-6 md:p-8">
                             <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-4 sm:mb-6 flex items-center gap-2">
-                                <span className="text-2xl sm:text-3xl">🎁</span>
+                                <span className="text-2xl sm:text-3xl"></span>
                                 What You'll Get
                             </h2>
                             <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 w-full">
@@ -470,7 +478,7 @@ export default function EventDetailClient({
                     {event.links?.length > 0 && (
                         <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-6 md:p-8 ">
                             <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-4 sm:mb-6 flex items-center gap-2">
-                                <span className="text-2xl sm:text-3xl">🔗</span>
+                                <span className="text-2xl sm:text-3xl"></span>
                                 Important Links
                             </h2>
                             <div className="grid gap-3 sm:gap-4">
@@ -512,6 +520,22 @@ export default function EventDetailClient({
                 {/* ──── RIGHT SIDEBAR ──── */}
                 <div className="space-y-6 hidden lg:block">
                     <div className="sticky top-6 space-y-6">
+                        {/* Quick Info */}
+                        <div className="bg-gradient-to-br from-pink-50 to-purple-50 rounded-2xl border border-pink-100 p-4 md:p-6">
+                            <h3 className="text-sm md:text-base font-bold text-gray-900 mb-3 md:mb-4">
+                                Event Information
+                            </h3>
+                            <div className="space-y-2 md:space-y-3 text-xs md:text-sm">
+                                <div className="flex justify-between">
+                                    <span className="text-gray-600">Category</span>
+                                    <span className="font-semibold text-gray-900">{event.category}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-gray-600">Price</span>
+                                    <span className="font-semibold text-green-600">FREE</span>
+                                </div>
+                            </div>
+                        </div>
 
                         {/* Registration Card */}
                         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 md:p-8">
@@ -529,38 +553,11 @@ export default function EventDetailClient({
                             )}
                         </div>
 
-                        {/* Quick Info */}
-                        <div className="bg-gradient-to-br from-pink-50 to-purple-50 rounded-2xl border border-pink-100 p-4 md:p-6">
-                            <h3 className="text-sm md:text-base font-bold text-gray-900 mb-3 md:mb-4">
-                                Event Information
-                            </h3>
-                            <div className="space-y-2 md:space-y-3 text-xs md:text-sm">
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">Category</span>
-                                    <span className="font-semibold text-gray-900">{event.category}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">Capacity</span>
-                                    <span className="font-semibold text-gray-900">
-                                        {capacity > 0 ? capacity : "Unlimited"}
-                                    </span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">Registered</span>
-                                    <span className="font-semibold text-gray-900">{registeredCount}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">Price</span>
-                                    <span className="font-semibold text-green-600">FREE</span>
-                                </div>
-                            </div>
-                        </div>
-
                         {/* Sidebar: Important Links (compact) */}
                         {event.links?.length > 0 && (
                             <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 md:p-6">
                                 <h3 className="text-sm md:text-base font-bold text-gray-900 mb-3 md:mb-4 flex items-center gap-2">
-                                    <span>🔗</span> Important Links
+                                    <span></span> Important Links
                                 </h3>
                                 <div className="space-y-2">
                                     {event.links.map((link) => {

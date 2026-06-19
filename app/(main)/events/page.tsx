@@ -1,13 +1,12 @@
 import CardWithSearch from '@/components/CardWithSearch'
 import Notifications from '@/components/Notifications'
-import { giveCommand } from '@/lib/ai'
 import { checkUser } from '@/lib/clerk'
 
 function page() {
-  const user = checkUser()
+  const clerk_user = checkUser();
   return (
     <div className='md:flex md:gap-4 w-full'>
-      <div className='w-full'>
+      <div className='w-full px-4'>
         {/* <WelcomeBanner/> */}
         <CardWithSearch/>
       </div>

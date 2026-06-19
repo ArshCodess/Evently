@@ -23,6 +23,9 @@ export async function GET(request: NextRequest) {
       include:{
         event: true,
         createdBy: true,
+      },
+      orderBy:{
+        createdAt:'desc'
       }
     });
 

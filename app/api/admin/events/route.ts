@@ -11,7 +11,7 @@ const eventSchema = z.object({
   }),
   location: z.string().min(1, 'Location is required'),
   category: z.string().min(1, 'Category is required'),
-  imageUrl: z.string().url().optional().nullable(),
+  imageUrl: z.string().url().optional().nullable(), 
 })
 
 // GET /api/admin/events - Get all events with pagination

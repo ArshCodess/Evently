@@ -6,6 +6,7 @@ import UserProvider from "@/hooks/UserProvider";
 import Sidebar from "@/components/Sidebar";
 import AnnouncementCard from "@/components/AnnouncementCard";
 import Notifications from "@/components/Notifications";
+import QProvider from "@/hooks/providers/EventQuery";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,13 +31,15 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <UserProvider>
-        <html lang="en">
-          <body
-            className={`${geistSans.variable} ${geistMono.variable} antialiased `}
-          >
-            {children}
-          </body>
-        </html>
+        <QProvider>
+          <html lang="en">
+            <body
+              className={`${geistSans.variable} ${geistMono.variable} antialiased `}
+            >
+              {children}
+            </body>
+          </html>
+        </QProvider>
       </UserProvider>
     </ClerkProvider>
   );

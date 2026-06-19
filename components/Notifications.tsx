@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import AnnouncementCard from "./AnnouncementCard";
 import { Megaphone, Loader2, RefreshCw } from "lucide-react";
 import { Announcement, Event, User } from "@/app/generated/prisma/client";
+import { useQuery } from "@tanstack/react-query";
 
 
 function Notifications() {
@@ -10,17 +11,15 @@ function Notifications() {
         event?: Event;
         createdBy?: User;
     })[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        fetchAnnouncements();
-    }, []);
+    const { data, isError, isFetching } = useQuery({
+        queryKey: ['announcements'],
+        queryFn: () => fetchAnnouncements(),
+    })
 
     const fetchAnnouncements = async () => {
         try {
-            setIsLoading(true);
             setError(null);
             const response = await fetch("/api/announcements");
 
@@ -30,12 +29,10 @@ function Notifications() {
 
             const data = await response.json();
             console.log("API Response:", data);
-            // Handle both array and object responses
-            setAnnouncements(Array.isArray(data) ? data : data.announcements || []);
+            return data;
         } catch (err) {
             setError(err instanceof Error ? err.message : "An error occurred");
-        } finally {
-            setIsLoading(false);
+            console.error(err instanceof Error ? err.message : "An error occurred");
         }
     };
 
@@ -65,7 +62,7 @@ function Notifications() {
                 </div>
             </div>
 
-            {isLoading ? (
+            {isFetching ? (
                 <div className="flex flex-col items-center justify-center py-12 bg-white rounded-2xl border border-gray-200">
                     <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mb-3" />
                     <p className="text-gray-500 text-sm">Loading announcements...</p>
@@ -83,7 +80,7 @@ function Notifications() {
                         Retry
                     </button>
                 </div>
-            ) : announcements.length === 0 ? (
+            ) : data.length === 0 ? (
                 <div className="text-center py-12 bg-white rounded-2xl border border-gray-200">
                     <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <Megaphone className="w-8 h-8 text-gray-400" />
@@ -92,7 +89,7 @@ function Notifications() {
                 </div>
             ) : (
                 <div className="space-y-4">
-                    {announcements.map((announcement) => (
+                    {data.map((announcement:any) => (
                         <AnnouncementCard key={announcement.id} announcement={announcement} />
                     ))}
                 </div>

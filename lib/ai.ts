@@ -17,13 +17,13 @@ export async function giveCommand(command: string) {
       model: "gemini-3-flash-preview",
       contents: command,
       config: {
-        systemInstruction: `You are EventlyAi. Extract event details from the user's command into a single JSON object matching this Zod schema:
+        systemInstruction: `You are EventlyAi. Extract event details from the user's command into a single JSON object matching this Zod schema exactly. Do not include any additional text or formatting. The JSON object should have the following structure:
             title: string (1-200 chars)
             description: string
             date: ISO 8601 (YYYY-MM-DDTHH:mm:ss.sssZ)
             location: string
             category: string
-            imageUrl: valid URL or ""
+            imageUrl: valid URL or null
             capacity: integer (min 0, 0=unlimited)
             highlights: {id: string, text: string}[]
             rewards: {id: string, icon: enum[🏆,🎁,📜,🤝,🎓,🍕,👕,💡,🌟,🎤], title: string, description: string}[]
