@@ -225,7 +225,7 @@ export default function EventDetailClient({
 
     /* ── Shared sub-components ── */
     const RegisterButton = ({ size = "lg" }: { size?: "sm" | "lg" }) => {
-        const py = size === "lg" ? "py-3 md:py-3" : "py-1 sm:py-4";
+        const py = size ===  "lg" ? "py-2.5 md:py-3" : "py-3 sm:py-4";
         const text = size === "lg" ? "text-base" : "text-xs sm:text-sm";
 
         if (isClosed)
@@ -238,7 +238,7 @@ export default function EventDetailClient({
         if (isRegistered)
             return (
                 <div className="w-full">
-                    <button disabled className={`w-full ${py} px-2 sm:px-4 rounded-xl bg-green-50 border-2 border-green-500 text-green-700 font-semibold ${text} flex flex-col md:flex-row items-center md:gap-2 justify-center `}>
+                    <button disabled className={`w-full py-1 sm:py-4 px-2 sm:px-4 rounded-xl bg-green-50 border-2 border-green-500 text-green-700 font-semibold ${text} flex flex-col md:flex-row items-center md:gap-2 justify-center `}>
                         <span>✓</span> You're Registered!
                     </button>
                 </div>

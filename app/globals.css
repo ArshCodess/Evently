@@ -1,1 +1,7 @@
 @import "tailwindcss";
+
+@theme {
+    --font-poppins: var(--font-poppins), sans-serif;
+    --font-giestSans: var(--font-giestSans), sans-serif;
+    --font-googleSans: var(--font-googleSans), sans-serif;
+}

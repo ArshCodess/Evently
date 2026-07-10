@@ -86,7 +86,7 @@ const MOCK_TICKETS: TicketItem[] = [
 
 export default function TicketsPage() {
   const [tickets, setTickets] = useState<TicketItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isloading, setLoading] = useState(true);
   const [selectedTicket, setSelectedTicket] = useState<TicketItem | null>(null);
   const [openedOnce, setOpenedOnce] = useState<Set<string>>(new Set());
   const [animating, setAnimating] = useState(false);
@@ -95,8 +95,9 @@ export default function TicketsPage() {
   // Replace this with your real API call
   useEffect(() => {
     try {
-      fetchTicket()
-      setLoading(false)
+      fetchTicket().then(() => {
+        setLoading(false)
+      })
     } catch (err) {
       console.log("Failed to Fetch Tickets");
       setTickets([])
@@ -141,17 +142,6 @@ export default function TicketsPage() {
       year: "numeric",
     });
 
-  if (loading) {
-    return (
-      <div className="min-h-screen w-full flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 rounded-full border-4 border-purple-200 border-t-purple-600 animate-spin" />
-          <p className="text-gray-500 text-sm">Fetching your tickets…</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <>
       <style>{CSS}</style>
@@ -169,7 +159,14 @@ export default function TicketsPage() {
           </p>
         </div>
 
-        {tickets.length === 0 ? (
+        {isloading ? (
+          <div className="w-full flex items-center justify-center">
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-10 h-10 rounded-full border-4 border-purple-200 border-t-purple-600 animate-spin" />
+              <p className="text-gray-500 text-sm">Fetching your tickets…</p>
+            </div>
+          </div>
+        ) : tickets.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 gap-4 text-gray-400">
             <Ticket className="w-16 h-16 opacity-30" />
             <p className="text-lg font-medium">No tickets yet</p>

@@ -23,12 +23,9 @@ export default function Sidebar() {
     <aside className="h-screen top-0 hidden sticky lg:flex lg:w-64 bg-white border-r border-l border-gray-200">
       <div className="flex-1 flex flex-col min-h-0">
         <div className="flex items-center h-16 px-6 border-b border-gray-200">
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-indigo-400 to-pink-400 rounded-lg flex items-center justify-center">
-              <Calendar className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-xl font-semibold bg-gradient-to-r from-indigo-600 to-pink-600 bg-clip-text text-transparent">
-              CampusHub
+          <div className="flex items-center mx-auto">
+            <span className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-pink-600 bg-clip-text text-transparent">
+              Evently
             </span>
           </div>
         </div>

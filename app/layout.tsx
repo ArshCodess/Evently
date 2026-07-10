@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Google_Sans, Poppins } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider, UserButton } from "@clerk/nextjs";
 import UserProvider from "@/hooks/UserProvider";
@@ -12,7 +12,15 @@ const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
 });
-
+const googleSans = Google_Sans({
+  variable: "--font-googleSans",
+  subsets: ["latin"],
+});
+const poppins =Poppins({
+  variable:"--font-poppins",
+  subsets:['latin'],
+  weight:['100','200','300','400','500','600','700']
+})
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
@@ -34,7 +42,7 @@ export default function RootLayout({
         <QProvider>
           <html lang="en">
             <body
-              className={`${geistSans.variable} ${geistMono.variable} antialiased `}
+              className={`${poppins.variable} ${geistSans.variable} ${geistMono.variable} ${googleSans.variable} font-googleSans antialiased`}
             >
               {children}
             </body>

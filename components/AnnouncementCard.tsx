@@ -38,7 +38,7 @@ export default function AnnouncementCard({ announcement }: {
 
       <div className="flex items-start space-x-4">
         <div className="flex-shrink-0">
-          <div className="w-12 h-12 bg-gradient-to-br from-indigo-400 to-pink-400 rounded-xl flex items-center justify-center shadow-lg">
+          <div className="w-12 h-12 bg-gradient-to-br from-pink-500 via-fuchsia-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
             <Megaphone className="w-6 h-6 text-white" />
           </div>
         </div>
