@@ -1,8 +1,8 @@
 "use client";
 
 import { useUser } from "@/hooks/UserProvider";
-import { Loader2 } from "lucide-react";
-import { useParams } from "next/navigation";
+import { ArrowBigDown, ArrowLeft, Cross, Loader2 } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
 import { JSX, useEffect, useMemo, useState } from "react";
 
 /* ─────────────────────────── Types ─────────────────────────── */
@@ -140,6 +140,7 @@ export default function EventDetailClient({
     const [registeredCount, setregisteredCount] = useState(event?._count?.registrations ?? 0);
     var capacity = event?.capacity ?? 0;
     const [spotsRemaining, setspotsRemaining] = useState(Math.max(0, capacity - registeredCount));
+    const router = useRouter()
 
     const daysLeft = useMemo(() => {
         if (!eventDate) return null;
@@ -224,7 +225,7 @@ export default function EventDetailClient({
 
     /* ── Shared sub-components ── */
     const RegisterButton = ({ size = "lg" }: { size?: "sm" | "lg" }) => {
-        const py = size ===  "lg" ? "py-2.5 md:py-3" : "py-3 sm:py-4";
+        const py = size === "lg" ? "py-2.5 md:py-3" : "py-3 sm:py-4";
         const text = size === "lg" ? "text-base" : "text-xs sm:text-sm";
 
         if (isClosed)
@@ -270,6 +271,9 @@ export default function EventDetailClient({
             </button>
         );
     };
+    const backbutton = ()=> {
+        router.replace("/events");
+    }
 
     const UrgencyBanner = () =>
         !isClosed && daysLeft !== null && daysLeft <= 7 ? (
@@ -281,7 +285,7 @@ export default function EventDetailClient({
         ) : null;
 
     return (
-        <div className="min-h-screen bg-gradient-to-br w-full space-y-4 from-pink-50 via-white to-purple-50 lg:mx-2">
+        <div className="min-h-screen bg-gradient-to-br w-full from-pink-50 via-white to-purple-50 lg:mx-2">
 
             {/* ── Profile completion dialog ── */}
             {!canRegister && (
@@ -303,7 +307,8 @@ export default function EventDetailClient({
 
 
             {/* ── MAIN CONTENT ── */}
-            <section className="max-w-6xl mx-auto px-4 sm:px-6 py-6 md:pb-16 grid lg:grid-cols-3 gap-6 sm:gap-8 md:gap-12 relative mb-20">
+            <div className=" p-1  text-gray-500 py-2  md:px-3 md:mt-2" onClick={backbutton}> <ArrowLeft strokeWidth={1.5} /></div>
+            <section className="max-w-6xl mx-auto pt-0 px-4 sm:px-6 py-6 md:pb-16 grid lg:grid-cols-3 gap-6 sm:gap-8 md:gap-12 relative mb-20">
                 {/* ──── LEFT COLUMN ──── */}
                 <div className="lg:col-span-2 space-y-6 sm:space-y-8 md:space-y-8 relative">
                     {/* ── HERO ── */}

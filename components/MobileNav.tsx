@@ -21,7 +21,7 @@ export default function MobileNav() {
     "scale-75 opacity-60";
 
   return (
-    <div className="fixed z-20 bottom-0 pb-1 bg-linear-180 from-transparent pt-3 to-25% lg:hidden to-white flex self-center w-full">
+    <div className="fixed z-20 bottom-0 pb-2 bg-linear-180 from-transparent pt-3 to-25% lg:hidden to-white flex self-center w-full">
       <div className="list-none justify-between bg-gradient-to-br  text-gray-200 from-indigo-500 items-center border-gray-300 border to-pink-500  flex  rounded-4xl py-2 px-2 mx-auto">
         <Link
           className={`${linkBase} ${isActive("/applied") ? `${active}` : `${inactive}`
