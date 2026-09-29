@@ -41,6 +41,7 @@ export default function RootLayout({
       <UserProvider>
         <QProvider>
           <html lang="en">
+            <link rel="manifest" href="/manifest.json" />
             <body
               className={`${poppins.variable} ${geistSans.variable} ${geistMono.variable} ${googleSans.variable} font-googleSans antialiased`}
             >

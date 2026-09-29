@@ -1,6 +1,6 @@
 {
-  "name": "MVP Event App",
-  "short_name": "Events",
+  "name": "Evently",
+  "short_name": "Evently",
   "description": "Register and discover amazing events at your university",
   "start_url": "/",
   "scope": "/",

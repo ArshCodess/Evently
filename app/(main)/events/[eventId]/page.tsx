@@ -2,7 +2,6 @@
 
 import { useUser } from "@/hooks/UserProvider";
 import { Loader2 } from "lucide-react";
-import { register } from "module";
 import { useParams } from "next/navigation";
 import { JSX, useEffect, useMemo, useState } from "react";
 
